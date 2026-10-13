@@ -1,7 +1,6 @@
 package net.conczin.immersive_optimization.config;
 
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityList;
 import net.minecraft.entity.IEntityMultiPart;
 import net.minecraft.entity.IProjectile;
 import net.minecraft.entity.boss.EntityDragon;
@@ -20,6 +19,8 @@ import net.minecraftforge.common.config.ConfigManager;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.registry.EntityEntry;
+import net.minecraftforge.fml.common.registry.EntityRegistry;
 
 import java.util.Collections;
 import java.util.Set;
@@ -250,6 +251,7 @@ public class ModConfig {
     private static final Set<String> cachedBlacklistedNamespaces = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private static final Set<Integer> cachedBlacklistedDimensions = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private static final java.util.Map<Class<?>, Boolean> HAS_BOSS_BAR_CACHE = new ConcurrentHashMap<>();
+    private static final java.util.Map<Class<?>, Boolean> CLASS_BLACKLIST_CACHE = new ConcurrentHashMap<>();
     private static volatile boolean cacheInitialized = false;
 
     public static void initCache() {
@@ -273,6 +275,7 @@ public class ModConfig {
         }
 
         HAS_BOSS_BAR_CACHE.clear();
+        CLASS_BLACKLIST_CACHE.clear();
         cacheInitialized = true;
     }
 
@@ -306,61 +309,86 @@ public class ModConfig {
     }
 
     public static boolean isSpecialOrElite(Entity entity) {
-        if (entity instanceof net.minecraft.entity.EntityLivingBase) {
-            net.minecraft.entity.EntityLivingBase living = (net.minecraft.entity.EntityLivingBase) entity;
+        if (!(entity instanceof net.minecraft.entity.EntityLivingBase)) {
+            return false;
+        }
+        net.minecraft.entity.EntityLivingBase living = (net.minecraft.entity.EntityLivingBase) entity;
 
-            // Universal exemption for any mob with a boss health bar
-            if (hasBossHealthBar(living)) {
-                return true;
-            }
+        // Universal exemption for any mob with a boss health bar
+        if (hasBossHealthBar(living)) {
+            return true;
+        }
 
-            // ScalingHealth Blight check
-            if (living.getEntityData() != null && living.getEntityData().getBoolean("ScalingHealth.IsBlight")) {
-                return true;
-            }
+        net.minecraft.nbt.NBTTagCompound data = living.getEntityData();
+        if (data != null) {
+            // ScalingHealth Blight / Infernal Mobs / Champions
+            if (data.getBoolean("ScalingHealth.IsBlight")) return true;
+            if (data.hasKey("InfernalMobsMod") || data.hasKey("infernalmobs")) return true;
+            if (data.hasKey("champions")) return true;
+        }
 
-            // Infernal Mobs check
-            if (living.getEntityData() != null && (living.getEntityData().hasKey("InfernalMobsMod") || living.getEntityData().hasKey("infernalmobs"))) {
-                return true;
-            }
+        return false;
+    }
 
-            // Champions check
-            if (living.getEntityData() != null && living.getEntityData().hasKey("champions")) {
-                return true;
-            }
+    /**
+     * Instance-independent blacklist checks (type hierarchy, registry name/namespace, Lycanites boss
+     * interface), cached per entity class. An entity's class never changes, so this avoids repeating
+     * registry lookups and interface walks for every entity on every priority refresh.
+     */
+    public static boolean isClassBlacklisted(Class<?> clazz) {
+        if (!cacheInitialized) initCache();
+        Boolean cached = CLASS_BLACKLIST_CACHE.get(clazz);
+        if (cached != null) return cached;
+        boolean result = computeClassBlacklisted(clazz);
+        CLASS_BLACKLIST_CACHE.put(clazz, result);
+        return result;
+    }
 
-            // Lycanites Mobs Boss check (interface hierarchy traversal)
-            Class<?> clazz = entity.getClass();
-            while (clazz != null && clazz != Object.class) {
-                for (Class<?> iface : clazz.getInterfaces()) {
-                    if ("com.lycanitesmobs.api.IGroupBoss".equals(iface.getName())) {
-                        return true;
-                    }
+    private static boolean computeClassBlacklisted(Class<?> clazz) {
+        // Hardcoded safety rules for critical game mechanics
+        if (EntityPlayer.class.isAssignableFrom(clazz)) return true;
+        if (IProjectile.class.isAssignableFrom(clazz)
+                || EntityArrow.class.isAssignableFrom(clazz)
+                || EntityThrowable.class.isAssignableFrom(clazz)
+                || EntityFireball.class.isAssignableFrom(clazz)
+                || EntityFishHook.class.isAssignableFrom(clazz)) {
+            return true;
+        }
+        if (IEntityMultiPart.class.isAssignableFrom(clazz)
+                || EntityDragon.class.isAssignableFrom(clazz)
+                || EntityWither.class.isAssignableFrom(clazz)) {
+            return true;
+        }
+        if (EntityWeatherEffect.class.isAssignableFrom(clazz)
+                || EntityFallingBlock.class.isAssignableFrom(clazz)
+                || EntityTNTPrimed.class.isAssignableFrom(clazz)) {
+            return true;
+        }
+
+        // Lycanites Mobs boss interface (class hierarchy traversal)
+        for (Class<?> c = clazz; c != null && c != Object.class; c = c.getSuperclass()) {
+            for (Class<?> iface : c.getInterfaces()) {
+                if ("com.lycanitesmobs.api.IGroupBoss".equals(iface.getName())) {
+                    return true;
                 }
-                clazz = clazz.getSuperclass();
             }
         }
+
+        // Registry name / namespace blacklists
+        EntityEntry entry = EntityRegistry.getEntry((Class<? extends Entity>) clazz);
+        if (entry != null && entry.getRegistryName() != null) {
+            ResourceLocation key = entry.getRegistryName();
+            if (cachedBlacklistedEntities.contains(key.toString().toLowerCase())) return true;
+            if (cachedBlacklistedNamespaces.contains(key.getNamespace().toLowerCase())) return true;
+        }
+
         return false;
     }
 
     public static boolean isEntityBlacklisted(Entity entity) {
         if (entity == null) return true;
 
-        // Hardcoded safety rules for critical game mechanics
-        if (entity instanceof EntityPlayer) return true;
-        if (entity instanceof IProjectile || entity instanceof EntityArrow ||
-            entity instanceof EntityThrowable || entity instanceof EntityFireball ||
-            entity instanceof EntityFishHook) {
-            return true;
-        }
-        if (entity instanceof IEntityMultiPart || entity instanceof EntityDragon || entity instanceof EntityWither) {
-            return true;
-        }
-        if (entity instanceof EntityWeatherEffect || entity instanceof EntityFallingBlock || entity instanceof EntityTNTPrimed) {
-            return true;
-        }
-
-        // Never throttle entities ridden by or riding players
+        // Never throttle entities ridden by or riding players (changes every tick, so not cached).
         if (entity.isRiding()) return true;
         if (entity.isBeingRidden()) {
             for (Entity passenger : entity.getRecursivePassengers()) {
@@ -370,23 +398,11 @@ public class ModConfig {
             }
         }
 
-        // Elite / Boss mod protections (Blights, Infernal Mobs, Champions, Lycanites bosses)
-        if (isSpecialOrElite(entity)) {
-            return true;
-        }
+        // Class-deterministic checks, cached per class.
+        if (isClassBlacklisted(entity.getClass())) return true;
 
-        if (!cacheInitialized) initCache();
-
-        ResourceLocation key = EntityList.getKey(entity);
-        if (key != null) {
-            String fullKey = key.toString().toLowerCase();
-            if (cachedBlacklistedEntities.contains(fullKey)) return true;
-
-            String namespace = key.getNamespace().toLowerCase();
-            if (cachedBlacklistedNamespaces.contains(namespace)) return true;
-        }
-
-        return false;
+        // Per-instance elite / boss checks (Blights, Infernal Mobs, Champions, boss health bar).
+        return isSpecialOrElite(entity);
     }
 
     @Mod.EventBusSubscriber(modid = "immersive_optimization")

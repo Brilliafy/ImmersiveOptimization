@@ -44,6 +44,16 @@ public class TickScheduler {
 
     public volatile FrustumProxy frustum;
 
+    // Per-tick dimension cache so the hot per-entity paths avoid ConcurrentHashMap lookups.
+    private int currentDim = Integer.MIN_VALUE;
+    private LevelData currentLevel;
+
+    // Single-entry memo so the second onUpdateTasks() wrap per entity per tick is effectively free.
+    private int memoDim = Integer.MIN_VALUE;
+    private long memoTime = Long.MIN_VALUE;
+    private int memoEntity = Integer.MIN_VALUE;
+    private boolean memoResult;
+
     public interface FrustumProxy {
         boolean isBoundingBoxInFrustum(AxisAlignedBB aabb);
     }
@@ -129,6 +139,11 @@ public class TickScheduler {
     public void reset() {
         levelData.clear();
         frustum = null;
+        currentDim = Integer.MIN_VALUE;
+        currentLevel = null;
+        memoDim = Integer.MIN_VALUE;
+        memoTime = Long.MIN_VALUE;
+        memoEntity = Integer.MIN_VALUE;
     }
 
     public static int refreshIntervalTicks() {
@@ -140,6 +155,10 @@ public class TickScheduler {
 
         int dimId = world.provider.getDimension();
         LevelData data = levelData.computeIfAbsent(dimId, LevelData::new);
+
+        // Cache for the hot per-entity paths (single-threaded per side, so no volatile needed).
+        currentDim = dimId;
+        currentLevel = data;
 
         // Re-evaluate on config reload instead of freezing the decision at construction.
         data.active = !ModConfig.isDimensionBlacklisted(dimId);
@@ -182,16 +201,20 @@ public class TickScheduler {
         data.forcedChunks = forced;
 
         if (!ModConfig.GENERAL.enableEntities) {
-            Int2IntOpenHashMap empty = new Int2IntOpenHashMap();
-            empty.defaultReturnValue(1);
-            data.priorities = empty;
+            data.priorities.clear();
             return;
         }
 
         List<Entity> loaded = world.loadedEntityList;
         int size = loaded.size();
-        Int2IntOpenHashMap newPriorities = new Int2IntOpenHashMap(Math.max(16, size));
-        newPriorities.defaultReturnValue(1);
+        Int2IntOpenHashMap newPriorities = data.priorities;
+        if (newPriorities == null) {
+            newPriorities = new Int2IntOpenHashMap(Math.max(16, size));
+            newPriorities.defaultReturnValue(1);
+            data.priorities = newPriorities;
+        } else {
+            newPriorities.clear();
+        }
 
         boolean collectTypes = size > 0;
         for (int i = 0; i < size; i++) {
@@ -228,33 +251,50 @@ public class TickScheduler {
         if (world == null || world.isRemote) return true;
 
         int dimId = world.provider.getDimension();
-        if (ModConfig.isDimensionBlacklisted(dimId)) return true;
+        LevelData data = (dimId == currentDim) ? currentLevel : levelData.get(dimId);
+        if (data == null || !data.active) return true;
 
-        // Fresh, cheap safety overrides that must react instantly and are never cached.
-        if (entity.isRiding() || entity.isBeingRidden()) return true;
-        if (!entity.onGround
+        // Invoked twice per entity per tick (both onUpdateTasks call sites are wrapped); memoise so the
+        // second call is only a few field compares.
+        long worldTime = world.getTotalWorldTime();
+        int entityId = entity.getEntityId();
+        if (entityId == memoEntity && worldTime == memoTime && dimId == memoDim) {
+            return memoResult;
+        }
+
+        boolean result;
+        if (entity.isRiding() || entity.isBeingRidden()) {
+            // Fresh, cheap safety overrides that must react instantly and are never cached.
+            result = true;
+        } else if (!entity.onGround
                 || entity.isElytraFlying()
                 || Math.abs(entity.motionY) > 0.08
                 || (entity.motionX * entity.motionX + entity.motionZ * entity.motionZ) > 0.02) {
-            return true;
+            result = true;
+        } else if (entity.hurtTime > 0 || entity.hurtResistantTime > 0) {
+            result = true;
+        } else if (entity.getRevengeTarget() != null) {
+            result = true;
+        } else if (entity.getAttackTarget() != null) {
+            result = true;
+        } else if (entity instanceof EntityCreeper && ((EntityCreeper) entity).getCreeperState() > 0) {
+            result = true;
+        } else {
+            List<EntityPlayer> players = world.playerEntities;
+            if (players.isEmpty()) {
+                // No players in this dimension: gentle idle scan instead of a hard throttle.
+                result = (worldTime + entityId) % 4 == 0;
+            } else {
+                int priority = data.priorities.get(entityId);
+                result = priority <= 1 || (data.tick + entityId) % priority == 0;
+            }
         }
-        if (entity.hurtTime > 0 || entity.hurtResistantTime > 0) return true;
-        if (entity.getRevengeTarget() != null) return true;
-        if (entity.getAttackTarget() != null) return true;
-        if (entity instanceof EntityCreeper && ((EntityCreeper) entity).getCreeperState() > 0) return true;
 
-        LevelData data = levelData.get(dimId);
-        if (data == null || !data.active) return true;
-
-        List<EntityPlayer> players = world.playerEntities;
-        if (players.isEmpty()) {
-            // No players in this dimension: gentle idle scan instead of a hard throttle.
-            return (world.getTotalWorldTime() + entity.getEntityId()) % 4 == 0;
-        }
-
-        int priority = data.priorities.get(entity.getEntityId());
-        if (priority <= 1) return true;
-        return (data.tick + entity.getEntityId()) % priority == 0;
+        memoDim = dimId;
+        memoTime = worldTime;
+        memoEntity = entityId;
+        memoResult = result;
+        return result;
     }
 
     /**
@@ -269,14 +309,13 @@ public class TickScheduler {
         if (world == null || world.isRemote) return true;
 
         int dimId = world.provider.getDimension();
-        if (ModConfig.isDimensionBlacklisted(dimId)) return true;
-
-        LevelData data = levelData.get(dimId);
+        LevelData data = (dimId == currentDim) ? currentLevel : levelData.get(dimId);
         if (data == null || !data.active) return true;
 
-        int priority = data.priorities.get(entity.getEntityId());
+        int entityId = entity.getEntityId();
+        int priority = data.priorities.get(entityId);
         if (priority <= 1) return true;
-        return (data.tick + entity.getEntityId()) % priority == 0;
+        return (data.tick + entityId) % priority == 0;
     }
 
     public static double getAverageTickMs(MinecraftServer server) {
@@ -298,6 +337,9 @@ public class TickScheduler {
         ChunkPos chunkPos = new ChunkPos(entity.chunkCoordX, entity.chunkCoordZ);
         if (forced.contains(chunkPos)) return 0;
 
+        int minDistance = ModConfig.TUNING.minDistance;
+        double minDistanceSafeSq = (double) (minDistance * minDistance);
+
         double minDistanceSq = Double.MAX_VALUE;
         List<EntityPlayer> players = world.playerEntities;
         int pCount = players.size();
@@ -307,6 +349,10 @@ public class TickScheduler {
                 double d = player.getDistanceSq(entity);
                 if (d < minDistanceSq) {
                     minDistanceSq = d;
+                    if (d <= minDistanceSafeSq) {
+                        // Within the no-throttle radius of a player, so priority is 1 regardless of others.
+                        return 1;
+                    }
                 }
             }
         }
@@ -314,11 +360,6 @@ public class TickScheduler {
         if (minDistanceSq == Double.MAX_VALUE) {
             // No players in this dimension.
             return ModConfig.TUNING.maxLevel;
-        }
-
-        int minDistance = ModConfig.TUNING.minDistance;
-        if (minDistanceSq <= (double) (minDistance * minDistance)) {
-            return 1;
         }
 
         if (ModConfig.GENERAL.enableItemThrottling) {
