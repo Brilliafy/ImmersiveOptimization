@@ -1,0 +1,16 @@
+{
+  "package": "net.conczin.immersive_optimization.mixin",
+  "required": true,
+  "refmap": "mixins.immersive_optimization.refmap.json",
+  "target": "@env(DEFAULT)",
+  "minVersion": "0.8.5",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [
+    "WorldMixin",
+    "EntityLivingMixin"
+  ],
+  "server": [],
+  "client": [
+    "client.RenderGlobalMixin"
+  ]
+}
