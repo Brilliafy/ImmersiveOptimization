@@ -257,6 +257,28 @@ public class TickScheduler {
         return (data.tick + entity.getEntityId()) % priority == 0;
     }
 
+    /**
+     * Whether a non-AI entity (dropped item, XP orb) should run its full {@code onUpdate} this tick.
+     * Uses the same cached priority table; near-player entities have priority 1 and are never skipped.
+     */
+    public boolean shouldTick(Entity entity) {
+        if (entity == null || entity.isDead) return true;
+        if (!ModConfig.GENERAL.enableEntities) return true;
+
+        World world = entity.world;
+        if (world == null || world.isRemote) return true;
+
+        int dimId = world.provider.getDimension();
+        if (ModConfig.isDimensionBlacklisted(dimId)) return true;
+
+        LevelData data = levelData.get(dimId);
+        if (data == null || !data.active) return true;
+
+        int priority = data.priorities.get(entity.getEntityId());
+        if (priority <= 1) return true;
+        return (data.tick + entity.getEntityId()) % priority == 0;
+    }
+
     public static double getAverageTickMs(MinecraftServer server) {
         if (server == null || server.tickTimeArray == null || server.tickTimeArray.length == 0) return 0.0;
         long sum = 0;
