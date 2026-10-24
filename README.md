@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Brilliafy/ImmersiveOptimization"><img src="https://img.shields.io/badge/Minecraft-1.12.2-informational.svg" alt="Minecraft 1.12.2"></a>
+  <a href="https://github.com/Brilliafy/EntityCadence"><img src="https://img.shields.io/badge/Minecraft-1.12.2-informational.svg" alt="Minecraft 1.12.2"></a>
   <a href="https://github.com/CleanroomMC"><img src="https://img.shields.io/badge/Modloader-Cleanroom%20%7C%20Forge-orange.svg" alt="Cleanroom / Forge"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License: GPLv3"></a>
 </p>
