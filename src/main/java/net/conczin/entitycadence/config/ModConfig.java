@@ -1,4 +1,4 @@
-package net.conczin.immersive_optimization.config;
+package net.conczin.entitycadence.config;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.IEntityMultiPart;
@@ -26,7 +26,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Config(modid = "immersive_optimization", name = "immersive_optimization")
+@Config(modid = "entitycadence", name = "entitycadence")
 public class ModConfig {
 
     @Config.Name("General")
@@ -405,12 +405,12 @@ public class ModConfig {
         return isSpecialOrElite(entity);
     }
 
-    @Mod.EventBusSubscriber(modid = "immersive_optimization")
+    @Mod.EventBusSubscriber(modid = "entitycadence")
     public static class ConfigSyncHandler {
         @SubscribeEvent
         public static void onConfigChanged(ConfigChangedEvent.OnConfigChangedEvent event) {
-            if (event.getModID().equals("immersive_optimization")) {
-                ConfigManager.sync("immersive_optimization", Config.Type.INSTANCE);
+            if (event.getModID().equals("entitycadence")) {
+                ConfigManager.sync("entitycadence", Config.Type.INSTANCE);
                 initCache();
             }
         }

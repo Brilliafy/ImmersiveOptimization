@@ -1,6 +1,6 @@
-package net.conczin.immersive_optimization.mixin;
+package net.conczin.entitycadence.mixin;
 
-import net.conczin.immersive_optimization.TickScheduler;
+import net.conczin.entitycadence.TickScheduler;
 import net.minecraft.entity.item.EntityXPOrb;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

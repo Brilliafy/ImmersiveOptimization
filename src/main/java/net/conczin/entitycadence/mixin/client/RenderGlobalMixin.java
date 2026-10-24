@@ -1,6 +1,6 @@
-package net.conczin.immersive_optimization.mixin.client;
+package net.conczin.entitycadence.mixin.client;
 
-import net.conczin.immersive_optimization.TickScheduler;
+import net.conczin.entitycadence.TickScheduler;
 import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.renderer.culling.ICamera;
 import net.minecraft.entity.Entity;

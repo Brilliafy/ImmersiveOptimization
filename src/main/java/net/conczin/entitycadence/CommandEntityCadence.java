@@ -1,6 +1,6 @@
-package net.conczin.immersive_optimization;
+package net.conczin.entitycadence;
 
-import net.conczin.immersive_optimization.config.ModConfig;
+import net.conczin.entitycadence.config.ModConfig;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
@@ -16,21 +16,21 @@ import javax.annotation.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class CommandImmersiveOptimization extends CommandBase {
+public class CommandEntityCadence extends CommandBase {
 
     @Override
     public String getName() {
-        return "io";
+        return "ec";
     }
 
     @Override
     public List<String> getAliases() {
-        return Arrays.asList("immersiveoptimization", "immersive_optimization");
+        return Arrays.asList("entitycadence", "entity_cadence", "io", "immersiveoptimization");
     }
 
     @Override
     public String getUsage(ICommandSender sender) {
-        return "/io [status|top|stress|reload|toggle]";
+        return "/ec [status|top|stress|reload|toggle]";
     }
 
     @Override
@@ -46,7 +46,7 @@ public class CommandImmersiveOptimization extends CommandBase {
     @Override
     public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
         if (args.length == 0 || "status".equalsIgnoreCase(args[0]) || "info".equalsIgnoreCase(args[0])) {
-            sender.sendMessage(new TextComponentString(TextFormatting.GOLD + "=== Immersive Optimization Status ==="));
+            sender.sendMessage(new TextComponentString(TextFormatting.GOLD + "=== Entity Cadence Status ==="));
             boolean enabled = ModConfig.GENERAL.enableEntities;
             sender.sendMessage(new TextComponentString(TextFormatting.GRAY + "Throttling: " +
                     (enabled ? TextFormatting.GREEN + "ENABLED" : TextFormatting.RED + "DISABLED") +
@@ -139,9 +139,9 @@ public class CommandImmersiveOptimization extends CommandBase {
                 sender.sendMessage(new TextComponentString(TextFormatting.RED + "You do not have permission to reload the configuration."));
                 return;
             }
-            ConfigManager.sync("immersive_optimization", Config.Type.INSTANCE);
+            ConfigManager.sync("entitycadence", Config.Type.INSTANCE);
             ModConfig.initCache();
-            sender.sendMessage(new TextComponentString(TextFormatting.GREEN + "Immersive Optimization configuration reloaded."));
+            sender.sendMessage(new TextComponentString(TextFormatting.GREEN + "Entity Cadence configuration reloaded."));
             return;
         }
 
@@ -151,7 +151,7 @@ public class CommandImmersiveOptimization extends CommandBase {
                 return;
             }
             ModConfig.GENERAL.enableEntities = !ModConfig.GENERAL.enableEntities;
-            ConfigManager.sync("immersive_optimization", Config.Type.INSTANCE);
+            ConfigManager.sync("entitycadence", Config.Type.INSTANCE);
             sender.sendMessage(new TextComponentString(TextFormatting.YELLOW + "Entity throttling is now: " +
                     (ModConfig.GENERAL.enableEntities ? TextFormatting.GREEN + "ENABLED" : TextFormatting.RED + "DISABLED")));
             return;

@@ -1,13 +1,13 @@
-package net.conczin.immersive_optimization.core;
+package net.conczin.entitycadence.core;
 
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
 
 import java.util.Map;
 
-@IFMLLoadingPlugin.Name("Immersive Optimization")
+@IFMLLoadingPlugin.Name("Entity Cadence")
 @IFMLLoadingPlugin.MCVersion("1.12.2")
 @IFMLLoadingPlugin.SortingIndex(1001)
-public class ImmersiveOptimizationCorePlugin implements IFMLLoadingPlugin {
+public class EntityCadenceCorePlugin implements IFMLLoadingPlugin {
 
     @Override
     public String[] getASMTransformerClass() {

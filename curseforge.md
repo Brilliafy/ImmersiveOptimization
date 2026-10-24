@@ -1,8 +1,8 @@
-# Immersive Optimization (1.12.2 Cleanroom & Forge)
+# Entity Cadence (1.12.2 Cleanroom & Forge)
 
-**Immersive Optimization** is an intelligent, crash-safe entity and AI tick scheduler for Minecraft 1.12.2 on **Cleanroom** and **Forge**.
+**Entity Cadence** is an intelligent, crash-safe entity and AI tick scheduler for Minecraft 1.12.2 on **Cleanroom** and **Forge**.
 
-By dynamically scaling the tick frequency of distant entity AI pathfinding and ground items without pausing physics or breaking combat, Immersive Optimization significantly improves server MSPT and client tick rates—all while keeping gameplay completely seamless.
+By dynamically scaling the tick frequency of distant entity AI pathfinding and ground items without pausing physics or breaking combat, Entity Cadence significantly improves server MSPT and client tick rates—all while keeping gameplay completely seamless.
 
 ---
 
@@ -10,7 +10,7 @@ By dynamically scaling the tick frequency of distant entity AI pathfinding and g
 
 In modded 1.12.2, servers and singleplayer worlds easily accumulate hundreds or thousands of loaded entities. Deep in caves, wandering dark forests, or resting in distant pens, these entities force Minecraft to waste up to **80% of its tick budget** running pathfinding searches, line-of-sight checks, and goal evaluations that no player can even observe.
 
-Unlike blunt optimizers that freeze entities in place or break modded AI, **Immersive Optimization is truly immersive**:
+Unlike blunt optimizers that freeze entities in place or break modded AI, **Entity Cadence maintains natural rhythm and pacing**:
 * Distant mobs gradually think less often.
 * Approaching mobs smoothly transition back to full 20 TPS.
 * Mobs in combat, falling through the air, taking damage, or preparing to explode react **instantly** at 100% speed.
@@ -45,26 +45,28 @@ Unlike blunt optimizers that freeze entities in place or break modded AI, **Imme
 
 ### 🕹️ In-Game Commands
 
-* `/io status` - Shows current optimization status, server MSPT, TPS, and dimension CPU savings.
-* `/io top [dim]` - Displays the top 10 most populated entity types in the dimension.
-* `/io stress` - Displays real-time anti-lag stress metrics and scaling factors.
-* `/io toggle` - (OP Level 2) Dynamically enable or disable entity throttling on the fly.
-* `/io reload` - (OP Level 2) Hot-reloads the configuration file.
+* `/ec status` - Shows current optimization status, server MSPT, TPS, and dimension CPU savings.
+* `/ec top [dim]` - Displays the top 10 most populated entity types in the dimension.
+* `/ec stress` - Displays real-time anti-lag stress metrics and scaling factors.
+* `/ec toggle` - (OP Level 2) Dynamically enable or disable entity throttling on the fly.
+* `/ec reload` - (OP Level 2) Hot-reloads the configuration file.
+
+*(Legacy command aliases `/io` and `/immersiveoptimization` are also supported).*
 
 ---
 
 ### 🤝 Mod Compatibility
 
-Immersive Optimization is designed to be fully compatible with existing 1.12.2 performance suites:
+Entity Cadence is designed to be fully compatible with existing 1.12.2 performance suites:
 * **VintageFix** / **FoamFix** / **Universal Tweaks** - Fully compatible.
 * **Clumps** - Fully compatible (both work together to minimize XP orb lag).
-* **Entity Culling** - Fully compatible (Entity Culling handles client render occlusion; Immersive Optimization handles server tick logic).
+* **Entity Culling** - Fully compatible (Entity Culling handles client render occlusion; Entity Cadence handles server tick logic).
 * **Tech Mods (AE2, Ender IO, GregTech)** - Fully compatible. (Block entity/TileEntity throttling is intentionally disabled to ensure machines and piping never desync).
 
 ---
 
 ### 📜 Credits & License
 
-* **Original Concept & Modern Mod**: Created by [Luke100000](https://github.com/Luke100000) for Minecraft 1.20.1+ ([GitHub Repository](https://github.com/Luke100000/ImmersiveOptimization)).
+* **Original Concept & Inspiration**: Inspired by [ImmersiveOptimization](https://github.com/Luke100000/ImmersiveOptimization) by [Luke100000](https://github.com/Luke100000).
 * **Cleanroom 1.12.2 Architecture & Rewrite**: Developed by Brilliafy.
 * **License**: Licensed under the [GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0.html).

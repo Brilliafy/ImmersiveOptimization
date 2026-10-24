@@ -1,7 +1,7 @@
-package net.conczin.immersive_optimization;
+package net.conczin.entitycadence;
 
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import net.conczin.immersive_optimization.config.ModConfig;
+import net.conczin.entitycadence.config.ModConfig;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;

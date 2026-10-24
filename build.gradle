@@ -204,7 +204,7 @@ processResources {
 jar {
     manifest {
         def attribute_map = [:]
-        attribute_map['MixinConfigs'] = 'mixins.immersive_optimization.json'
+        attribute_map['MixinConfigs'] = "mixins.${propertyString('mod_id')}.json"
         attribute_map['FMLCorePluginContainsFMLMod'] = true
         attribute_map['ForceLoadAsMod'] = true
         if (propertyBool('is_coremod')) {

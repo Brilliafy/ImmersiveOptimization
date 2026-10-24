@@ -1,6 +1,6 @@
-package net.conczin.immersive_optimization;
+package net.conczin.entitycadence;
 
-import net.conczin.immersive_optimization.config.ModConfig;
+import net.conczin.entitycadence.config.ModConfig;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
@@ -16,11 +16,11 @@ import org.apache.logging.log4j.Logger;
         acceptableRemoteVersions = "*",
         acceptedMinecraftVersions = "[1.12.2]"
 )
-public class ImmersiveOptimization {
-    public static final Logger LOGGER = LogManager.getLogger("ImmersiveOptimization");
+public class EntityCadence {
+    public static final Logger LOGGER = LogManager.getLogger("EntityCadence");
 
     @Mod.Instance(Tags.MOD_ID)
-    public static ImmersiveOptimization INSTANCE;
+    public static EntityCadence INSTANCE;
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
@@ -31,7 +31,7 @@ public class ImmersiveOptimization {
     @Mod.EventHandler
     public void serverStarting(FMLServerStartingEvent event) {
         TickScheduler.setServer(event.getServer());
-        event.registerServerCommand(new CommandImmersiveOptimization());
+        event.registerServerCommand(new CommandEntityCadence());
     }
 
     @Mod.EventHandler

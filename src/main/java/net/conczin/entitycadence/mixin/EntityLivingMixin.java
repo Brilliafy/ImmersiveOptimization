@@ -1,8 +1,8 @@
-package net.conczin.immersive_optimization.mixin;
+package net.conczin.entitycadence.mixin;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import net.conczin.immersive_optimization.TickScheduler;
+import net.conczin.entitycadence.TickScheduler;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.ai.EntityAITasks;
