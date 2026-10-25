@@ -2,7 +2,7 @@
 
 **Entity Cadence** is an intelligent, crash-safe entity and AI tick scheduler for Minecraft 1.12.2 on **Cleanroom** and **Forge**.
 
-By dynamically scaling the tick frequency of distant entity AI pathfinding and ground items without pausing physics or breaking combat, Entity Cadence significantly improves server MSPT and client tick rates—all while keeping gameplay completely seamless.
+By dynamically scaling the tick frequency of distant entity AI pathfinding and ground items without pausing physics or breaking combat, Entity Cadence significantly improves server MSPT and client tick rates all while keeping gameplay completely seamless.
 
 ---
 
